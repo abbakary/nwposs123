@@ -114,9 +114,6 @@ def api_start_order(request):
 
             # Create new customer if not using pre-selected one
             if not customer:
-                customer = None
-                if plate_number:
-            else:
                 try:
                     name_src = plate_number or f"Customer {timezone.now().strftime('%Y%m%d%H%M')}"
                     phone_src = plate_number and f"PLATE_{plate_number}" or None
@@ -136,12 +133,13 @@ def api_start_order(request):
                         defaults={'customer_type': 'personal'}
                     )
 
-                vehicle = None
-                if plate_number:
-                    vehicle = VehicleService.create_or_get_vehicle(
-                        customer=customer,
-                        plate_number=plate_number
-                    )
+            # Create or get vehicle for the customer
+            vehicle = None
+            if plate_number and customer:
+                vehicle = VehicleService.create_or_get_vehicle(
+                    customer=customer,
+                    plate_number=plate_number
+                )
 
             # Calculate estimated duration from selected services if provided
             try:
