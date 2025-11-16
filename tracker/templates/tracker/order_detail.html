@@ -1717,6 +1717,64 @@
   </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const netValueInput = document.getElementById('componentNetValue');
+  const vatRateInput = document.getElementById('componentVATRate');
+  const vatAmountInput = document.getElementById('componentVATAmount');
+  const grossValueInput = document.getElementById('componentGrossValue');
+  const existingInvoiceSelect = document.getElementById('existingInvoiceSelect');
+
+  function calculateValues() {
+    const netValue = parseFloat(netValueInput.value) || 0;
+    const vatRate = parseFloat(vatRateInput.value) || 0;
+    const vatAmount = (netValue * vatRate) / 100;
+    const grossValue = netValue + vatAmount;
+
+    vatAmountInput.value = vatAmount.toFixed(2);
+    grossValueInput.value = grossValue.toFixed(2);
+  }
+
+  if (netValueInput) {
+    netValueInput.addEventListener('input', calculateValues);
+  }
+  if (vatRateInput) {
+    vatRateInput.addEventListener('input', calculateValues);
+  }
+
+  const addComponentForm = document.getElementById('addComponentForm');
+  if (addComponentForm) {
+    addComponentForm.addEventListener('submit', function(e) {
+      const activeTab = document.querySelector('.nav-link.active');
+      if (activeTab && activeTab.id === 'uploadInvoiceTab') {
+        const netValue = parseFloat(netValueInput.value) || 0;
+        const grossValue = parseFloat(grossValueInput.value) || 0;
+        if (netValue > 0 || grossValue > 0) {
+          e.preventDefault();
+          const formData = new FormData(this);
+          fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value
+            }
+          }).then(response => {
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert('Error adding component. Please try again.');
+            }
+          }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+          });
+        }
+      }
+    });
+  }
+});
+</script>
+
 <!-- Link Invoice Modal -->
 <div class="modal fade" id="linkInvoiceModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
