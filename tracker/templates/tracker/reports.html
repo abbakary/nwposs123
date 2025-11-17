@@ -147,7 +147,6 @@
                   <th>Customer</th>
                   <th>Type</th>
                   <th>Status</th>
-                  <th>Priority</th>
                   <th>Created At</th>
                 </tr>
               </thead>
@@ -159,11 +158,10 @@
                   <td>{{ o.customer.full_name }}</td>
                   <td class="text-capitalize">{{ o.type }}</td>
                   <td><span class="badge {% if o.status == 'completed' %}badge-success{% elif o.status == 'in_progress' %}badge-warning{% elif o.status == 'cancelled' %}badge-danger{% else %}badge-secondary{% endif %}">{{ o.status|title }}</span></td>
-                  <td class="text-capitalize">{{ o.priority }}</td>
                   <td>{{ o.created_at|date:'Y-m-d H:i' }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center text-muted">No data</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">No data</td></tr>
                 {% endfor %}
               </tbody>
             </table>
