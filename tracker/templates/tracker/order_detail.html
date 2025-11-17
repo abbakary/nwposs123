@@ -1166,8 +1166,8 @@
         <div class="d-flex align-items-center">
           <i class="fa fa-pen-fancy me-3 fa-lg"></i>
           <div>
-            <h5 class="modal-title fw-bold mb-0">Complete Order</h5>
-            <small class="opacity-75">Capture signature and confirm order completion</small>
+            <h5 class="modal-title fw-bold mb-0">Complete Order & Capture Signature</h5>
+            <small class="opacity-75">Select a document and capture customer signature</small>
           </div>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1177,18 +1177,24 @@
           {% csrf_token %}
           <input type="hidden" name="signature_data" id="signatureDataInput">
           <input type="hidden" name="overrun_reason" id="completeOverrunHidden" value="{{ order.overrun_reason|default:''|escape }}">
+          <input type="hidden" name="selected_document" id="selectedDocumentInput">
 
           <!-- Tab Navigation -->
           <div class="border-bottom px-4 pt-4">
             <ul class="nav nav-tabs" role="tablist">
               <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="signatureTab" data-bs-toggle="tab" data-bs-target="#signatureSection" type="button" role="tab" aria-controls="signatureSection" aria-selected="true">
-                  <i class="fa fa-signature me-2"></i>Signature
+                <button class="nav-link active" id="documentTab" data-bs-toggle="tab" data-bs-target="#documentSection" type="button" role="tab" aria-controls="documentSection" aria-selected="true">
+                  <i class="fa fa-file-contract me-2"></i>Select Document
                 </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link" id="reasonTab" data-bs-toggle="tab" data-bs-target="#reasonSection" type="button" role="tab" aria-controls="reasonSection" aria-selected="false">
-                  <i class="fa fa-comments me-2"></i>Details
+                <button class="nav-link" id="signatureTab" data-bs-toggle="tab" data-bs-target="#signatureSection" type="button" role="tab" aria-controls="signatureSection" aria-selected="false">
+                  <i class="fa fa-signature me-2"></i>Capture Signature
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="detailsTab" data-bs-toggle="tab" data-bs-target="#detailsSection" type="button" role="tab" aria-controls="detailsSection" aria-selected="false">
+                  <i class="fa fa-info-circle me-2"></i>Details
                 </button>
               </li>
             </ul>
@@ -1196,38 +1202,97 @@
 
           <!-- Tab Content -->
           <div class="tab-content p-4">
-            <!-- Signature Tab -->
-            <div class="tab-pane fade show active" id="signatureSection" role="tabpanel">
+            <!-- Document Selection Tab -->
+            <div class="tab-pane fade show active" id="documentSection" role="tabpanel">
+              <div class="mb-4">
+                <h6 class="text-dark mb-3"><i class="fa fa-file me-2"></i>Choose Document to Sign</h6>
+                <p class="text-muted small mb-3">Select an existing document from below or upload a new one:</p>
+
+                <!-- Existing Documents -->
+                {% if order.attachments.all or order.completion_attachment %}
+                <div class="mb-4">
+                  <h6 class="text-muted mb-2"><i class="fa fa-check-circle text-success me-1"></i>Available Documents</h6>
+                  <div class="document-list-group">
+                    {% for att in order.attachments.all %}
+                    <div class="document-option mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input doc-selector" type="radio" name="document_choice" id="doc-{{ att.id }}" value="attachment-{{ att.id }}" data-doc-name="{{ att.filename|default:att.file.name }}">
+                        <label class="form-check-label w-100" for="doc-{{ att.id }}">
+                          <div class="d-flex align-items-center">
+                            <i class="fa fa-paperclip text-muted me-2"></i>
+                            <div>
+                              <div class="fw-medium">{{ att.filename|default:att.file.name }}</div>
+                              <small class="text-muted d-block">Uploaded {{ att.uploaded_at|localtime|date:"M j, Y g:i a" }}</small>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    {% endfor %}
+
+                    {% if order.completion_attachment %}
+                    <div class="document-option mb-2">
+                      <div class="form-check">
+                        <input class="form-check-input doc-selector" type="radio" name="document_choice" id="doc-completion" value="completion" data-doc-name="Completion Document">
+                        <label class="form-check-label w-100" for="doc-completion">
+                          <div class="d-flex align-items-center">
+                            <i class="fa fa-file-contract text-info me-2"></i>
+                            <div>
+                              <div class="fw-medium">Completion Document</div>
+                              <small class="text-muted d-block">Final document for signature</small>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+
+                <!-- New Document Upload -->
+                <div class="upload-section">
+                  <h6 class="text-muted mb-2"><i class="fa fa-cloud-upload-alt me-1"></i>Or Upload a New Document</h6>
+                  <div class="mb-3">
+                    <input type="file" id="attachmentInput" name="completion_attachment" class="form-control" accept="image/*,.pdf" data-doc-name="Newly uploaded document">
+                  </div>
+                </div>
+
+                <!-- Selected Document Display -->
+                <div id="selectedDocInfo" style="display: none;">
+                  <div class="alert alert-info bg-info bg-opacity-10 border-info">
+                    <i class="fa fa-check-circle me-2"></i>
+                    <strong>Selected:</strong> <span id="selectedDocName"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Signature Capture Tab -->
+            <div class="tab-pane fade" id="signatureSection" role="tabpanel">
               <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <label class="form-label fw-bold text-dark mb-0">
-                    <i class="fa fa-pen me-2 text-success"></i>Customer Signature <span class="text-danger">*</span>
+                    <i class="fa fa-pen me-2 text-success"></i>Draw Customer Signature <span class="text-danger">*</span>
                   </label>
-                  <small class="text-muted">Draw signature in the box below</small>
+                  <small class="text-muted">Use mouse or touch to draw</small>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label fw-medium">Document to sign</label>
-                  <input type="file" id="attachmentInput" name="completion_attachment" class="form-control" accept="image/*,.pdf">
-                </div>
-                <div id="docSignContainer" class="signature-pad-wrapper position-relative overflow-hidden bg-white border border-2 rounded-lg d-flex align-items-center justify-content-center" style="height: 160px; border-color: #dee2e6; border-style: dashed; cursor: crosshair;">
+                <div id="docSignContainer" class="signature-pad-wrapper position-relative overflow-hidden bg-white border border-3 rounded-lg d-flex align-items-center justify-content-center" style="height: 200px; border-color: #dee2e6; border-style: solid; cursor: crosshair;">
                   <div id="docPreviewHost" class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
                     <div class="text-center pointer-events-none">
                       <i class="fa fa-pen-fancy fa-2x mb-2 text-muted opacity-50"></i>
-                      <p class="mb-0 fw-medium small">Click to sign</p>
+                      <p class="mb-0 fw-medium small">Click and draw signature here</p>
                     </div>
                   </div>
                   <canvas id="signaturePad" class="position-absolute top-0 start-0 w-100 h-100" style="cursor: crosshair; z-index: 2; display: none;"></canvas>
                 </div>
-                <div class="d-flex gap-2 mt-2 align-items-center">
+                <div class="d-flex gap-2 mt-3 align-items-center flex-wrap">
                   <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSignatureBtn" style="display: none;">
-                    <i class="fa fa-eraser me-1"></i>Clear
-                  </button>
-                  <button type="button" class="btn btn-sm btn-success" id="signAndCompleteBtn" style="display: none;">
-                    <i class="fa fa-check me-1"></i>Sign & Complete
+                    <i class="fa fa-eraser me-1"></i>Clear Signature
                   </button>
                   <div id="signaturePreviewSmall" class="ms-auto d-flex align-items-center gap-2" style="display: none;">
                     <small class="text-muted">Preview:</small>
-                    <canvas id="signaturePreviewMini" width="100" height="50" style="border: 1px solid #dee2e6; border-radius: 4px; background: white; max-height: 50px;"></canvas>
+                    <canvas id="signaturePreviewMini" width="120" height="60" style="border: 1px solid #dee2e6; border-radius: 4px; background: white; max-height: 60px;"></canvas>
                   </div>
                 </div>
               </div>
