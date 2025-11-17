@@ -815,67 +815,6 @@
       </div>
       {% endif %}
 
-      <!-- Additional Invoices Section -->
-      <div class="card shadow-sm mb-4 invoices-card">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <h6 class="mb-0"><i class="fa fa-file-invoice me-2"></i>Invoices & Documents</h6>
-          {% if order.status != 'completed' and order.status != 'cancelled' and order.type != 'inquiry' %}
-          <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#linkInvoiceModal">
-            <i class="fa fa-link me-1"></i>Link Invoice
-          </button>
-          {% endif %}
-        </div>
-        <div class="card-body">
-          {% if order.invoice_links.exists %}
-          <div class="invoices-list">
-            {% for link in order.invoice_links.all %}
-            <div class="invoice-link-item mb-3 p-3 border rounded" style="background-color: #f8f9fa;">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center mb-2">
-                    <i class="fa fa-file-pdf text-danger me-2"></i>
-                    <a href="{% url 'tracker:invoice_detail' pk=link.invoice.id %}" class="text-decoration-none fw-bold">
-                      {{ link.invoice.invoice_number }}
-                    </a>
-                    {% if link.is_primary %}
-                    <span class="badge bg-primary ms-2">Primary</span>
-                    {% endif %}
-                    <small class="text-muted ms-2">{{ link.linked_at|localtime|date:"M j, Y g:i a" }}</small>
-                  </div>
-                  <div class="mt-2">
-                    <small class="text-muted d-block">Total: <strong>{{ link.invoice.total_amount|floatformat:2 }}</strong></small>
-                  </div>
-                  {% if link.reason %}
-                  <div class="mt-2">
-                    <small class="text-muted d-block">Reason for Linking:</small>
-                    <p class="mb-0 text-dark">{{ link.reason }}</p>
-                  </div>
-                  {% endif %}
-                </div>
-                <div class="invoice-actions">
-                  <div class="btn-group btn-group-sm">
-                    <a href="{% url 'tracker:invoice_detail' pk=link.invoice.id %}" class="btn btn-outline-primary" title="View Invoice">
-                      <i class="fa fa-eye"></i>
-                    </a>
-                    {% if order.status != 'completed' and order.status != 'cancelled' %}
-                    <button type="button" class="btn btn-outline-danger remove-invoice-link" data-link-id="{{ link.id }}" data-bs-toggle="modal" data-bs-target="#removeInvoiceLinkModal" title="Remove Link">
-                      <i class="fa fa-unlink"></i>
-                    </button>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <div class="text-muted text-center py-3">
-            <i class="fa fa-inbox fa-2x opacity-50 mb-2"></i>
-            <p class="mb-0">No additional invoices linked to this order.</p>
-          </div>
-          {% endif %}
-        </div>
-      </div>
 
       <!-- Enhanced Attachments & Signatures Section -->
       <div class="card shadow-sm mb-4 attachments-card">
