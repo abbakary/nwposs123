@@ -3358,17 +3358,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const fileUrl = this.getAttribute('data-file-url');
         const fileName = this.getAttribute('data-file-name');
         const attachmentId = this.getAttribute('data-attachment-id');
-        
+
         // Set the form values
         if (signExistingAttachmentId) signExistingAttachmentId.value = attachmentId;
         if (signExistingFileName) signExistingFileName.value = fileName;
         if (currentDocumentName) currentDocumentName.textContent = fileName;
-        
+
         // Load the document preview
         loadExistingDocPreview(fileUrl, fileName);
-        
+
         // Show the modal
-        const modal = new bootstrap.Modal(document.getElementById('signExistingModal'));
+        const modalEl = document.getElementById('signExistingModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        // Initialize canvas AFTER modal is shown so dimensions are correct
+        modalEl.addEventListener('shown.bs.modal', function initCanvasAfterShow() {
+          // Only initialize once
+          modalEl.removeEventListener('shown.bs.modal', initCanvasAfterShow);
+          setTimeout(() => {
+            initializeExistingDocSignaturePad();
+          }, 100);
+        }, { once: true });
+
         modal.show();
       });
     });
